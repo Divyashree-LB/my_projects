@@ -1,0 +1,37 @@
+          +-----------------------+
+          |   Start Pipeline      |
+          +-----------------------+
+                     |
+                     v
+          +-----------------------+
+          |   Clone Repo Stage    |
+          | git pull from GitHub  |
+          +-----------------------+
+                     |
+                     v
+          +-----------------------+
+          |    Build Stage        |
+          | mvn clean package     |
+          | (skip tests)          |
+          +-----------------------+
+                     |
+                     v
+          +-----------------------+
+          |    Run App Stage      |
+          | Stop old process      |
+          | Run JAR on port 9090  |
+          | Logs -> app.log       |
+          +-----------------------+
+                     |
+                     v
+          +-----------------------+
+          |      Post Actions     |
+          |  Success: Echo msg    |
+          |  Failure: Echo msg    |
+          +-----------------------+
+                     |
+                     v
+          +-----------------------+
+          |      Pipeline Ends    |
+          +-----------------------+
+
