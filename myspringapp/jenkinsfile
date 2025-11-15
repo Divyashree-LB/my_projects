@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_DIR = "/home/ubuntu/my_projects/myspringapp"
+        JAR_NAME = "spring_demo-1.0.0.jar"
+    }
+
+    stages {
+        stage('Clone Repo') {
+            steps {
+                git branch: 'main', url: 'git@github.com:Divyashree-LB/my_projects.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Run App') {
+            steps {
+                // Stop any existing process on 9090
+                sh "pkill -f ${JAR_NAME} || true"
+
+                // Run the app in background with nohup
+                sh "nohup java -jar ${APP_DIR}/target/${JAR_NAME} --server.port=9090 > ${APP_DIR}/app.log 2>&1 &"
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Spring Boot app deployed on port 9090!"
+        }
+        failure {
+            echo "Pipeline failed. Check logs."
+        }
+    }
+}
