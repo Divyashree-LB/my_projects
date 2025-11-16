@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myspringapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myspringapp
+  template:
+    metadata:
+      labels:
+        app: myspringapp
+    spec:
+      containers:
+        - name: myspringapp
+          image: divyashree1129/myspringapp:latest
+          ports:
+            - containerPort: 9090
