@@ -3,6 +3,7 @@
 A very small Java application that shows a message in the browser:
                               "Hello DevOps from SpringBoot 🚀"
 This app will be used for your CI/CD Pipeline with Jenkins + Docker + ArgoCD.
+
 --------------------------------Step1: Building application-----------------------------------------------------------------
 project structure
 myspringapp/
@@ -51,5 +52,10 @@ java -jar target/spring_demo-1.0.0.jar
 
  <img width="817" height="300" alt="image" src="https://github.com/user-attachments/assets/36a719f0-408b-40f7-844c-a85432606303" />
 
-Push your code to your Github repository
+4.Push your code to your Github repository
+5.install Jenkins on ec2 and trigger pipleline from SCM
+Optional: you can add webhook in git and enable trigger in your job
+
+http://13.203.196.249:8080/github-webhook/
+
 
