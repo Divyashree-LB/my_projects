@@ -3,6 +3,10 @@ pipeline {
 
     environment {
         PROJECT_DIR = "myspringapp"
+        DOCKER_IMAGE = "divyashree/myspringapp:latest"
+        ARGOCD_SERVER = "13.203.196.249:30007"   // your ArgoCD NodePort
+        ARGOCD_USER = "admin"
+        ARGOCD_PASS = "F0vwRDRgjsUFk-HD"         // store as secret in real setup
     }
 
     stages {
@@ -16,40 +20,46 @@ pipeline {
 
         stage('Build') {
             steps {
-                dir("${PROJECT_DIR}") {     // enter into myspringapp/
+                dir("${PROJECT_DIR}") {
                     sh 'mvn clean package -DskipTests'
                 }
             }
         }
 
-        stage('Run App') {
+        stage('Build Docker Image') {
             steps {
                 dir("${PROJECT_DIR}") {
-
-                    script {
-                        // find jar automatically
-                        JAR = sh(
-                            script: "ls target/*.jar | head -1",
-                            returnStdout: true
-                        ).trim()
-                    }
-
-                    // stop old app
-                    sh "pkill -f ${JAR} || true"
-
-                    // run new app
-                    sh "nohup java -jar ${JAR} --server.port=9090 > app.log 2>&1 &"
+                    sh "docker build -t ${DOCKER_IMAGE} ."
                 }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                sh """
+                    echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
+                    docker push ${DOCKER_IMAGE}
+                """
+            }
+        }
+
+        stage('Deploy via ArgoCD') {
+            steps {
+                sh """
+                    argocd login ${ARGOCD_SERVER} --username ${ARGOCD_USER} --password ${ARGOCD_PASS} --insecure
+                    argocd app sync myspringapp
+                """
             }
         }
     }
 
     post {
         success {
-            echo "Spring Boot app deployed successfully on port 9090!"
+            echo "Spring Boot app deployed successfully via ArgoCD!"
         }
         failure {
             echo "Pipeline failed. Check logs."
         }
     }
 }
+
