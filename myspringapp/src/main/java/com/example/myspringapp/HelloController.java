@@ -8,7 +8,7 @@ public class HelloController {
 
     @GetMapping("/")
     public String home() {
-        return "Hello DevOps from SpringBoot 🚀";
+        return "Hello from Divya 🚀";
     }
 }
 
