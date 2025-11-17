@@ -3,22 +3,18 @@ pipeline {
 
     environment {
         PROJECT_DIR = "myspringapp"
-        DOCKER_IMAGE = "divyashree/myspringapp:latest"
-        ARGOCD_SERVER = "13.203.196.249:30007"   // your ArgoCD NodePort
-        ARGOCD_USER = "admin"
-        ARGOCD_PASS = "F0vwRDRgjsUFk-HD"         // store as secret in real setup
+        IMAGE_NAME = "divyashree/myspringapp"
+        K8_PATH = "myspringapp/k8"
     }
 
     stages {
-
         stage('Clone Repo') {
             steps {
-                git branch: 'main',
-                    url: 'git@github.com:Divyashree-LB/my_projects.git'
+                git branch: 'main', url: 'git@github.com:Divyashree-LB/my_projects.git'
             }
         }
 
-        stage('Build') {
+        stage('Build Java App') {
             steps {
                 dir("${PROJECT_DIR}") {
                     sh 'mvn clean package -DskipTests'
@@ -26,40 +22,44 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build & Push Docker Image') {
             steps {
                 dir("${PROJECT_DIR}") {
-                    sh "docker build -t ${DOCKER_IMAGE} ."
+                    script {
+                        IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                        sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                        sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
+                    }
                 }
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Update K8s Manifest') {
             steps {
-                sh """
-                    echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
-                    docker push ${DOCKER_IMAGE}
-                """
+                dir("${PROJECT_DIR}") {
+                    script {
+                        // Replace image tag in deployment.yaml
+                        sh "sed -i 's|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${IMAGE_TAG}|' ${K8_PATH}/deployment.yaml"
+                        sh "git add ${K8_PATH}/deployment.yaml"
+                        sh "git commit -m 'Update deployment to image ${IMAGE_TAG}' || echo 'No changes'"
+                        sh "git push origin main || echo 'Push failed (maybe nothing to push)'"
+                    }
+                }
             }
         }
 
-        stage('Deploy via ArgoCD') {
+        stage('Deploy to Kubernetes') {
             steps {
-                sh """
-                    argocd login ${ARGOCD_SERVER} --username ${ARGOCD_USER} --password ${ARGOCD_PASS} --insecure
-                    argocd app sync myspringapp
-                """
+                dir("${PROJECT_DIR}") {
+                    sh "kubectl apply -f ${K8_PATH}/deployment.yaml"
+                }
             }
         }
     }
 
     post {
-        success {
-            echo "Spring Boot app deployed successfully via ArgoCD!"
-        }
-        failure {
-            echo "Pipeline failed. Check logs."
-        }
+        success { echo "Application deployed successfully!" }
+        failure { echo "Build failed. Check logs." }
     }
 }
 
