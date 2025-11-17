@@ -5,6 +5,8 @@ pipeline {
         PROJECT_DIR = "myspringapp"
         IMAGE_NAME = "divyashree/myspringapp"
         K8_PATH = "myspringapp/k8"
+        ARGOCD_SERVER = "15.207.113.26:30008"   // your NodePort
+        ARGOCD_APP = "myspringapp"
     }
 
     stages {
@@ -28,6 +30,10 @@ pipeline {
                     script {
                         IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                         sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                    }
+
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
                         sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
                     }
                 }
@@ -38,7 +44,6 @@ pipeline {
             steps {
                 dir("${PROJECT_DIR}") {
                     script {
-                        // Replace image tag in deployment.yaml
                         sh "sed -i 's|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${IMAGE_TAG}|' ${K8_PATH}/deployment.yaml"
                         sh "git add ${K8_PATH}/deployment.yaml"
                         sh "git commit -m 'Update deployment to image ${IMAGE_TAG}' || echo 'No changes'"
@@ -52,6 +57,17 @@ pipeline {
             steps {
                 dir("${PROJECT_DIR}") {
                     sh "kubectl apply -f ${K8_PATH}/deployment.yaml"
+                }
+            }
+        }
+
+        stage('Trigger ArgoCD Sync') {  // <-- now correctly inside stages
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'argocd-cred', usernameVariable: 'ARGO_USER', passwordVariable: 'ARGO_PASS')]) {
+                    sh """
+                        argocd login ${ARGOCD_SERVER} --username \$ARGO_USER --password \$ARGO_PASS --insecure
+                        argocd app sync ${ARGOCD_APP}
+                    """
                 }
             }
         }
