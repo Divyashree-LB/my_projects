@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         PROJECT_DIR = "myspringapp"
-        IMAGE_NAME = "divyashree/myspringapp"
+        IMAGE_NAME = "divyashree1129/myspringapp"
         K8_PATH = "myspringapp/k8"
         ARGOCD_SERVER = "15.207.113.26:30008"   // your NodePort
         ARGOCD_APP = "myspringapp"
