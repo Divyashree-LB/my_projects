@@ -1,24 +1,30 @@
                                                        My CICD project
 
-A very small Java application that shows a message in the browser:
-                              "Hello DevOps from SpringBoot 🚀"
 This app will be used for your CI/CD Pipeline with Jenkins + Docker + ArgoCD.
+
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/cd9bafe2-956d-4e6b-95a5-040d978ec0c7" />
+
 
 --------------------------------Step1: Building application-----------------------------------------------------------------
 project structure
 myspringapp/
- ├── pom.xml                  # Maven configuration file
- ├── target/                  # Compiled JARs and build files (generated after mvn package)
- └── src/
-      └── main/
-           ├── java/
-           │    └── com/
-           │         └── example/
-           │              └── myspringapp/
-           │                   ├── MySpringAppApplication.java   # Main Spring Boot class
-           │                   └── HelloController.java          # REST controller
-           └── resources/
-                └── application.properties    # Config file (server.port=9090)
+ ├─ k8/                         # Kubernetes manifests
+ │   ├─ deployment.yaml
+ │   └─ service.yaml
+ ├─ src/
+ │   └─ main/
+ │       ├─ java/com/example/myspringapp/
+ │       │    ├─ MySpringAppApplication.java
+ │       │    └─ HelloController.java
+ │       └─ resources/
+ │            └─ application.properties
+ ├─ target/                      # Maven build output (JARs)
+ ├─ Dockerfile                   # Docker image build
+ ├─ jenkinsfile                  # CI/CD pipeline
+ ├─ argocd-svc-nodeport.yaml     # Expose ArgoCD server
+ ├─ pom.xml                      # Maven config
+ ├─ README / README.md           # Docs1. pom.xml
+
 1. pom.xml
  :: This is a Maven configuration file.
    It tells Maven:  
@@ -57,5 +63,7 @@ java -jar target/spring_demo-1.0.0.jar
 Optional: you can add webhook in git and enable trigger in your job
 
 http://13.203.196.249:8080/github-webhook/
+
+
 
 
