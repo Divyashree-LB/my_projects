@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
         - name: myspringapp
-          image: divyashree1129/myspringapp:f5b53e7
+          image: divyashree1129/myspringapp:cda1d4d
           ports:
             - containerPort: 9090
